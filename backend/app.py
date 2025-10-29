@@ -143,25 +143,58 @@ def handle_certificates_main():
         # Handle GET request - fetch certificates
         if request.method == 'GET':
             print(f"Fetching certificates for user: {current_user.get('email')}")
-            
+            print(f"Fetching certificates for user: {current_user.get('role') }")
             # If admin, return all certificates, otherwise return user's certificates
             if current_user.get('role') == 'admin':
                 certificates = list(certificates_collection.find().sort('uploaded_at', -1))
-                # Populate user details for admin view
+                # Populate user details for admin view and sanitize fields
                 for cert in certificates:
-                    cert['_id'] = str(cert['_id'])
+                    # Convert ObjectId fields to strings
+                    if '_id' in cert and isinstance(cert['_id'], ObjectId):
+                        cert['_id'] = str(cert['_id'])
+                    if 'user_id' in cert and isinstance(cert['user_id'], ObjectId):
+                        cert['user_id'] = str(cert['user_id'])
+
                     if 'user_id' in cert:
-                        user = users_collection.find_one({'_id': ObjectId(cert['user_id'])})
+                        try:
+                            user = users_collection.find_one({'_id': ObjectId(cert['user_id'])})
+                        except Exception:
+                            user = users_collection.find_one({'_id': cert.get('user_id')})
                         cert['user_name'] = user['name'] if user else 'Unknown'
                         cert['user_email'] = user['email'] if user else 'Unknown'
+
+                    # Convert datetimes to ISO strings
+                    if 'uploaded_at' in cert and hasattr(cert['uploaded_at'], 'isoformat'):
+                        cert['uploaded_at'] = cert['uploaded_at'].isoformat()
+                    if 'verified_at' in cert and hasattr(cert['verified_at'], 'isoformat'):
+                        cert['verified_at'] = cert['verified_at'].isoformat()
+
                     # Don't send file data in list
                     if 'file_data' in cert:
                         del cert['file_data']
             else:
                 # Regular user - only their certificates
-                certificates = list(certificates_collection.find({'user_id': current_user['id']}))
+                # Try matching by ObjectId first, otherwise fall back to email or string id
+                query = {}
+                try:
+                    query['user_id'] = ObjectId(current_user['id'])
+                except Exception:
+                    # use email or string id if ObjectId conversion fails
+                    if current_user.get('email'):
+                        query['user_email'] = current_user.get('email')
+                    else:
+                        query['user_id'] = current_user.get('id')
+
+                certificates = list(certificates_collection.find(query))
                 for cert in certificates:
-                    cert['_id'] = str(cert['_id'])
+                    if '_id' in cert and isinstance(cert['_id'], ObjectId):
+                        cert['_id'] = str(cert['_id'])
+                    if 'user_id' in cert and isinstance(cert['user_id'], ObjectId):
+                        cert['user_id'] = str(cert['user_id'])
+                    if 'uploaded_at' in cert and hasattr(cert['uploaded_at'], 'isoformat'):
+                        cert['uploaded_at'] = cert['uploaded_at'].isoformat()
+                    if 'verified_at' in cert and hasattr(cert['verified_at'], 'isoformat'):
+                        cert['verified_at'] = cert['verified_at'].isoformat()
                     if 'file_data' in cert:
                         del cert['file_data']
             
