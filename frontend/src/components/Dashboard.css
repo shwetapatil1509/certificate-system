@@ -1,0 +1,215 @@
+/* body {
+  background: #eef2ff;
+  font-family: 'Poppins', sans-serif;
+}
+
+.dashboard-container {
+  margin: 60px auto;
+  width: 90%;
+  max-width: 1000px;
+  background: #fff;
+  padding: 30px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.loading-message {
+  text-align: center;
+  color: #6b7280;
+  padding: 40px;
+  font-size: 16px;
+}
+
+.no-certificates {
+  text-align: center;
+  color: #6b7280;
+  padding: 40px;
+  background: #f9fafb;
+  border-radius: 12px;
+  font-size: 16px;
+}
+
+/* Certificates Section */
+.certificates-section h3 {
+  color: #1f2937;
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #e5e7eb;
+  padding-bottom: 8px;
+}
+
+/* Table Styles */
+.table-container {
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  background: white;
+}
+
+.certificates-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.certificates-table th {
+  background: linear-gradient(135deg, #4f46e5, #3b82f6);
+  color: white;
+  font-weight: 600;
+  padding: 16px 12px;
+  text-align: left;
+  border-bottom: 2px solid #3730a3;
+}
+
+.certificates-table td {
+  padding: 16px 12px;
+  border-bottom: 1px solid #f3f4f6;
+  vertical-align: top;
+}
+
+.certificates-table tbody tr:hover {
+  background-color: #f8fafc;
+}
+
+.certificates-table tbody tr:nth-child(even) {
+  background-color: #fafbfc;
+}
+
+/* Table Cell Styles */
+.cert-title {
+  font-weight: 600;
+  color: #1f2937;
+  max-width: 200px;
+  word-wrap: break-word;
+}
+
+.user-info strong {
+  color: #1f2937;
+  font-size: 14px;
+}
+
+.user-info small {
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.date-cell {
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.file-info {
+  color: #374151;
+  font-size: 13px;
+  max-width: 150px;
+  word-wrap: break-word;
+}
+
+/* Status Badges */
+.status-badge {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.status-pending {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.status-verified {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.status-rejected {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+/* Action Buttons */
+.actions-cell {
+  min-width: 120px;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.btn-approve {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-approve:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.btn-reject {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-reject:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.status-text {
+  color: #6b7280;
+  font-size: 13px;
+  font-style: italic;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .dashboard-container {
+    margin: 20px auto;
+    padding: 20px;
+    width: 98%;
+  }
+  
+  .certificates-table {
+    font-size: 12px;
+  }
+  
+  .certificates-table th,
+  .certificates-table td {
+    padding: 12px 8px;
+  }
+  
+  .dashboard-header h2 {
+    font-size: 24px;
+  }
+  
+  .action-buttons {
+    flex-direction: column;
+  }
+  
+  .btn-approve,
+  .btn-reject {
+    width: 100%;
+    margin-bottom: 4px;
+  }
+}

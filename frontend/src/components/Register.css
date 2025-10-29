@@ -1,0 +1,29 @@
+.password-wrapper {
+  position: relative;
+ 
+}
+ .password-wrapper input {
+  padding-right: 40px; 
+}
+
+.toggle-password {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  color: #2563eb;
+  transition: 0.3s;
+}
+
+.toggle-password:hover {
+  color: #1e40af;
+}
+
+.error-msg {
+  color: #ef4444;
+  text-align: center;
+  margin-top: 12px;
+  font-size: 14px;
+}
+

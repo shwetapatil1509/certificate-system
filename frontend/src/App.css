@@ -1,0 +1,82 @@
+/* General body styling */
+body {
+  font-family: 'Arial', sans-serif;
+  background-color: #f5f5f5;
+  margin: 0;
+  padding: 0;
+}
+
+/* Centering forms */
+.auth-container {
+  width: 100%;
+  max-width: 400px;
+  margin: 80px auto;
+  background-color: #fff;
+  padding: 40px 30px;
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+/* Headings */
+.auth-container h2 {
+  text-align: center;
+  margin-bottom: 30px;
+  color: #333;
+}
+
+/* Form elements */
+.auth-container input {
+  width: 100%;
+  padding: 12px 15px;
+  margin-bottom: 20px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 16px;
+  transition: border-color 0.3s;
+}
+
+.auth-container input:focus {
+  border-color: #007BFF;
+  outline: none;
+}
+
+/* Submit button */
+.auth-container button {
+  width: 100%;
+  padding: 12px;
+  background-color: #007BFF;
+  border: none;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.auth-container button:hover {
+  background-color: #0056b3;
+}
+
+/* Error messages */
+.auth-container p {
+  color: red;
+  text-align: center;
+  margin-top: -10px;
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+
+/* Links below forms */
+.auth-container .link {
+  text-align: center;
+  display: block;
+  margin-top: 10px;
+  font-size: 14px;
+  color: #007BFF;
+  text-decoration: none;
+  transition: color 0.3s;
+}
+
+.auth-container .link:hover {
+  color: #0056b3;
+}
