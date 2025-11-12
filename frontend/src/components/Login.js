@@ -11,13 +11,11 @@ const Login = () => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-    const handleSubmit = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       const res = await loginUser({ email, password });
       login(res.data.user, res.data.access_token);
-      
-      // Redirect based on user role
       if (res.data.user.role === 'admin') {
         navigate('/admin-dashboard');
       } else {
@@ -34,21 +32,21 @@ const Login = () => {
       <form onSubmit={handleSubmit}>
         <input
           type="email"
-          placeholder="Email"
+          placeholder="Enter your email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
         />
         <input
           type="password"
-          placeholder="Password"
+          placeholder="Enter your password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
         />
         <button type="submit">Login</button>
       </form>
-      {error && <p style={{color:'red'}}>{error}</p>}
+      {error && <p style={{ color: 'red' }}>{error}</p>}
       <Link to="/register" className="link">
         Don't have an account? Register
       </Link>

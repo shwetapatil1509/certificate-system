@@ -1,513 +1,196 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from flask_jwt_extended import JWTManager, jwt_required, create_access_token, get_jwt_identity, get_jwt
+from flask_jwt_extended import (
+    JWTManager, jwt_required, create_access_token,
+    get_jwt_identity, get_jwt
+)
 from bson import ObjectId
-import bcrypt
-import os
-from dotenv import load_dotenv
 from datetime import datetime, timedelta
+from dotenv import load_dotenv
+import os
+import bcrypt
 import base64
 
-# Import database connection
+# Import your MongoDB helper functions
 from database import get_database, get_users_collection, get_certificates_collection, db_connection
 
+# ────────────────────────────────
+# Setup
+# ────────────────────────────────
 load_dotenv()
-
 app = Flask(__name__)
 CORS(app)
 
-# Configuration
-app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'your-secret-key-change-in-production')
-app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=24)
+app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY", "secret123")
+app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(days=1)
 jwt = JWTManager(app)
 
-# Get database collections
 users_collection = get_users_collection()
 certificates_collection = get_certificates_collection()
 
-@app.route('/')
-def home():
-    """Home endpoint"""
-    db_status = "connected" if db_connection.check_connection() else "disconnected"
-    return jsonify({
-        "message": "Certificate Verification System API",
-        "database": db_status,
-        "version": "1.0.0"
-    })
-
-@app.route('/api/health', methods=['GET'])
-def health_check():
-    """Health check endpoint"""
-    db_connected = db_connection.check_connection()
-    return jsonify({
-        "status": "healthy" if db_connected else "degraded",
-        "database": "connected" if db_connected else "disconnected",
-        "timestamp": datetime.utcnow().isoformat(),
-        "endpoints": {
-            "register": "/api/register",
-            "login": "/api/login",
-            "upload": "/api/certificates",
-            "user_certificates": "/api/user/certificates"
-        }
-    })
-
-# Auth routes
-@app.route('/api/register', methods=['POST'])
+# ────────────────────────────────
+# AUTH
+# ────────────────────────────────
+@app.route("/api/register", methods=["POST"])
 def register():
-    try:
-        if not db_connection.check_connection():
-            return jsonify({'error': 'Database connection unavailable'}), 500
-            
-        data = request.get_json()
-        
-        # Validate required fields
-        if not data.get('email') or not data.get('password') or not data.get('name'):
-            return jsonify({'error': 'Missing required fields: name, email, password'}), 400
-        
-        # Check if user already exists
-        if users_collection.find_one({'email': data['email']}):
-            return jsonify({'error': 'User already exists with this email'}), 400
-        
-        # Hash password
-        hashed_password = bcrypt.hashpw(data['password'].encode('utf-8'), bcrypt.gensalt())
-        
-        # Create user
-        user = {
-            'name': data['name'],
-            'email': data['email'],
-            'password': hashed_password,
-            'role': 'user',
-            'created_at': datetime.utcnow()
-        }
-        
-        result = users_collection.insert_one(user)
-        
-        return jsonify({
-            'message': 'User registered successfully',
-            'user_id': str(result.inserted_id)
-        }), 201
-        
-    except Exception as e:
-        print(f"Registration error: {e}")
-        return jsonify({'error': 'Internal server error'}), 500
+    data = request.get_json()
+    name, email, password = data.get("name"), data.get("email"), data.get("password")
+    role = data.get("role", "user")
 
-@app.route('/api/login', methods=['POST'])
+    if not (name and email and password):
+        return jsonify({"error": "All fields required"}), 400
+    if users_collection.find_one({"email": email}):
+        return jsonify({"error": "Email already exists"}), 400
+
+    hashed_pw = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt())
+    user = {"name": name, "email": email, "password": hashed_pw, "role": role}
+    users_collection.insert_one(user)
+    return jsonify({"message": "User registered successfully"}), 201
+
+
+@app.route("/api/login", methods=["POST"])
 def login():
-    try:
-        if not db_connection.check_connection():
-            return jsonify({'error': 'Database connection unavailable'}), 500
-            
-        data = request.get_json()
-        
-        if not data.get('email') or not data.get('password'):
-            return jsonify({'error': 'Email and password required'}), 400
-        
-        user = users_collection.find_one({'email': data['email']})
-        
-        if user and bcrypt.checkpw(data['password'].encode('utf-8'), user['password']):
-            # Use string identity (user id) and add email/role as additional claims
-            access_token = create_access_token(
-                identity=str(user['_id']),
-                additional_claims={
-                    'email': user['email'],
-                    'role': user['role']
-                }
-            )
-            return jsonify({
-                'access_token': access_token,
-                'user': {
-                    'id': str(user['_id']),
-                    'name': user['name'],
-                    'email': user['email'],
-                    'role': user['role']
-                }
-            }), 200
-        else:
-            return jsonify({'error': 'Invalid email or password'}), 401
-            
-    except Exception as e:
-        print(f"Login error: {e}")
-        return jsonify({'error': 'Internal server error'}), 500
+    data = request.get_json()
+    email, password = data.get("email"), data.get("password")
 
+    user = users_collection.find_one({"email": email})
+    if not user or not bcrypt.checkpw(password.encode("utf-8"), user["password"]):
+        return jsonify({"error": "Invalid credentials"}), 401
 
-
-# Certificate routes
-@app.route('/api/certificates', methods=['GET', 'POST'])
-@jwt_required()
-def handle_certificates_main():
-    try:
-        identity = get_jwt_identity()
-        claims = get_jwt()
-        current_user = {'id': identity, 'email': claims.get('email'), 'role': claims.get('role')}
-        
-        # Handle GET request - fetch certificates
-        if request.method == 'GET':
-            print(f"Fetching certificates for user: {current_user.get('email')}")
-            print(f"Fetching certificates for user: {current_user.get('role') }")
-            # If admin, return all certificates, otherwise return user's certificates
-            if current_user.get('role') == 'admin':
-                certificates = list(certificates_collection.find().sort('uploaded_at', -1))
-                # Populate user details for admin view and sanitize fields
-                for cert in certificates:
-                    # Convert ObjectId fields to strings
-                    if '_id' in cert and isinstance(cert['_id'], ObjectId):
-                        cert['_id'] = str(cert['_id'])
-                    if 'user_id' in cert and isinstance(cert['user_id'], ObjectId):
-                        cert['user_id'] = str(cert['user_id'])
-
-                    if 'user_id' in cert:
-                        try:
-                            user = users_collection.find_one({'_id': ObjectId(cert['user_id'])})
-                        except Exception:
-                            user = users_collection.find_one({'_id': cert.get('user_id')})
-                        cert['user_name'] = user['name'] if user else 'Unknown'
-                        cert['user_email'] = user['email'] if user else 'Unknown'
-
-                    # Convert datetimes to ISO strings
-                    if 'uploaded_at' in cert and hasattr(cert['uploaded_at'], 'isoformat'):
-                        cert['uploaded_at'] = cert['uploaded_at'].isoformat()
-                    if 'verified_at' in cert and hasattr(cert['verified_at'], 'isoformat'):
-                        cert['verified_at'] = cert['verified_at'].isoformat()
-
-                    # Don't send file data in list
-                    if 'file_data' in cert:
-                        del cert['file_data']
-            else:
-                # Regular user - only their certificates
-                # Try matching by ObjectId first, otherwise fall back to email or string id
-                query = {}
-                try:
-                    query['user_id'] = ObjectId(current_user['id'])
-                except Exception:
-                    # use email or string id if ObjectId conversion fails
-                    if current_user.get('email'):
-                        query['user_email'] = current_user.get('email')
-                    else:
-                        query['user_id'] = current_user.get('id')
-
-                certificates = list(certificates_collection.find(query))
-                for cert in certificates:
-                    if '_id' in cert and isinstance(cert['_id'], ObjectId):
-                        cert['_id'] = str(cert['_id'])
-                    if 'user_id' in cert and isinstance(cert['user_id'], ObjectId):
-                        cert['user_id'] = str(cert['user_id'])
-                    if 'uploaded_at' in cert and hasattr(cert['uploaded_at'], 'isoformat'):
-                        cert['uploaded_at'] = cert['uploaded_at'].isoformat()
-                    if 'verified_at' in cert and hasattr(cert['verified_at'], 'isoformat'):
-                        cert['verified_at'] = cert['verified_at'].isoformat()
-                    if 'file_data' in cert:
-                        del cert['file_data']
-            
-            return jsonify(certificates), 200
-        
-        # Handle POST request - upload certificate
-        elif request.method == 'POST':
-            print(f"Upload request from user: {current_user.get('email')}")
-            
-            if 'file' not in request.files:
-                print("No file in request")
-                return jsonify({'error': 'No file uploaded'}), 400
-        
-        file = request.files['file']
-        title = request.form.get('title', 'Untitled Certificate')
-        description = request.form.get('description', '')
-        
-        print(f"File received: {file.filename}")
-        print(f"Title: {title}")
-        
-        if file.filename == '':
-            print("Empty filename")
-            return jsonify({'error': 'No file selected'}), 400
-        
-        # Check file extension
-        allowed_extensions = {'pdf', 'jpg', 'jpeg', 'png', 'doc', 'docx'}
-        file_extension = file.filename.rsplit('.', 1)[1].lower() if '.' in file.filename else ''
-        
-        if file_extension not in allowed_extensions:
-            print(f"Invalid file extension: {file_extension}")
-            return jsonify({'error': f'File type not allowed. Allowed types: {", ".join(allowed_extensions)}'}), 422
-        
-        # Validate file size (max 10MB)
-        file.seek(0, 2)  # Seek to end
-        file_size = file.tell()
-        file.seek(0)  # Reset seek position
-        
-        print(f"File size: {file_size} bytes")
-        
-        if file_size > 10 * 1024 * 1024:  # 10MB limit
-            print("File too large")
-            return jsonify({'error': 'File size too large. Maximum 10MB allowed.'}), 422
-        
-        if file_size == 0:
-            print("Empty file")
-            return jsonify({'error': 'File is empty'}), 422
-        
-        # Read file and convert to base64
-        file_data = file.read()
-        file_base64 = base64.b64encode(file_data).decode('utf-8')
-        
-        certificate = {
-            'user_id': current_user['id'],
-            'title': title,
-            'description': description,
-            'file_name': file.filename,
-            'file_data': file_base64,
-            'file_type': file.content_type,
-            'file_size': file_size,
-            'status': 'pending',
-            'uploaded_at': datetime.utcnow(),
-            'verified_at': None,
-            'verified_by': None
+    access_token = create_access_token(
+        identity=str(user["_id"]),
+        additional_claims={
+            "email": user["email"],
+            "role": user["role"],
+            "name": user["name"],
+        },
+    )
+    return jsonify({
+        "message": "Login successful",
+        "access_token": access_token,
+        "user": {
+            "id": str(user["_id"]),
+            "name": user["name"],
+            "email": user["email"],
+            "role": user["role"],
         }
-        
-        result = certificates_collection.insert_one(certificate)
-        print(f"Certificate saved with ID: {result.inserted_id}")
-        
-        return jsonify({
-            'message': 'Certificate uploaded successfully',
-            'certificate_id': str(result.inserted_id)
-        }), 201
-        
-    except Exception as e:
-        print(f"Upload error: {str(e)}")
-        return jsonify({'error': f'Internal server error: {str(e)}'}), 500
-    
-# @app.route('/api/user/certificates', methods=['GET'])
-# @jwt_required()
-# def get_user_certificates():
-#     try:
-#         user_identity = get_jwt_identity()
-#         print("🔍 Current user identity:", user_identity)
+    }), 200
 
-#         if not user_identity:
-#             return jsonify({'error': 'User not found'}), 401
-
-#         # Determine whether JWT contains ObjectId or email
-#         query = {}
-#         try:
-#             query['user_id'] = ObjectId(user_identity)
-#         except Exception:
-#             query['user_email'] = user_identity
-
-#         certificates = list(certificates_collection.find(query))
-
-#         # Return empty list if none
-#         if not certificates:
-#             return jsonify([]), 200
-
-#         # Convert ObjectIds to strings for JSON
-#         for cert in certificates:
-#             cert['_id'] = str(cert['_id'])
-#             if 'user_id' in cert and isinstance(cert['user_id'], ObjectId):
-#                 cert['user_id'] = str(cert['user_id'])
-
-#         return jsonify(certificates), 200
-
-#     except Exception as e:
-#         print("❌ Error fetching certificates:", str(e))
-#         return jsonify({'error': 'Failed to load certificates'}), 500
-    
-@app.route('/api/user/certificates', methods=['GET', 'POST'])
+# ────────────────────────────────
+# USER CERTIFICATES
+# ────────────────────────────────
+@app.route("/api/certificates", methods=["POST"])
 @jwt_required()
-def handle_certificates():
-    user_identity = get_jwt_identity()
+def upload_certificate():
+    claims = get_jwt()
+    user_id = get_jwt_identity()
+    role = claims.get("role")
 
-    try:
-        # 🟩 Handle file upload (POST)
-        if request.method == 'POST':
-            print("🔍 Uploading certificate for:", user_identity)
+    title = request.form.get("title")
+    file = request.files.get("file")
 
-            # Determine user identifier
-            query_field = "user_email"
-            user_id = user_identity
-            try:
-                user_id = ObjectId(user_identity)
-                query_field = "user_id"
-            except Exception:
-                pass
+    if not file or not title:
+        return jsonify({"error": "Missing file or title"}), 400
 
-            if 'file' not in request.files:
-                return jsonify({'error': 'No file provided'}), 400
+    # save file on disk
+    upload_dir = "uploads"
+    os.makedirs(upload_dir, exist_ok=True)
+    file_path = os.path.join(upload_dir, file.filename)
+    file.save(file_path)
 
-            file = request.files['file']
-            title = request.form.get('title', '')
-            description = request.form.get('description', '')
+    certificate = {
+        "user_id": user_id,
+        "title": title,
+        "file_name": file.filename,
+        "file_path": file_path,
+        "status": "pending",
+        "uploaded_at": datetime.utcnow(),
+    }
+    certificates_collection.insert_one(certificate)
+    return jsonify({"message": "Certificate uploaded successfully"}), 201
 
-            if not file.filename:
-                return jsonify({'error': 'Empty filename'}), 400
 
-            upload_folder = 'uploads'
-            os.makedirs(upload_folder, exist_ok=True)
-            file_path = os.path.join(upload_folder, file.filename)
-            file.save(file_path)
-
-            certificate_data = {
-                query_field: user_id,
-                "title": title,
-                "description": description,
-                "filename": file.filename,
-                "filepath": file_path,
-            }
-            result = certificates_collection.insert_one(certificate_data)
-            print("✅ Uploaded certificate with ID:", result.inserted_id)
-
-            return jsonify({
-                'message': 'File uploaded successfully',
-                'id': str(result.inserted_id)
-            }), 201
-
-        # 🟦 Handle fetching certificates (GET)
-        elif request.method == 'GET':
-            print("🔍 Fetching certificates for:", user_identity)
-            query = {}
-            try:
-                query['user_id'] = ObjectId(user_identity)
-            except Exception:
-                query['user_email'] = user_identity
-
-            certificates = list(certificates_collection.find(query))
-            for cert in certificates:
-                cert['_id'] = str(cert['_id'])
-                if 'user_id' in cert and isinstance(cert['user_id'], ObjectId):
-                    cert['user_id'] = str(cert['user_id'])
-
-            return jsonify(certificates), 200
-
-    except Exception as e:
-        print("❌ Error in certificates API:", e)
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/certificates/<certificate_id>', methods=['GET'])
+@app.route("/api/certificates", methods=["GET"])
 @jwt_required()
-def get_certificate(certificate_id):
-    try:
-        if not db_connection.check_connection():
-            return jsonify({'error': 'Database connection unavailable'}), 500
-            
-        identity = get_jwt_identity()
-        claims = get_jwt()
-        current_user = {'id': identity, 'email': claims.get('email'), 'role': claims.get('role')}
+def get_user_certificates():
+    user_id = get_jwt_identity()
+    claims = get_jwt()
+    role = claims.get("role")
 
-        certificate = certificates_collection.find_one({'_id': ObjectId(certificate_id)})
+    if role == "admin":
+        certs = list(certificates_collection.find())
+    else:
+        certs = list(certificates_collection.find({"user_id": user_id}))
 
-        if not certificate:
-            return jsonify({'error': 'Certificate not found'}), 404
+    for c in certs:
+        c["_id"] = str(c["_id"])
+        c["uploaded_at"] = c.get("uploaded_at", datetime.utcnow()).isoformat()
+    return jsonify(certs), 200
 
-        # Determine stored owner id/email and normalize to string
-        cert_owner = certificate.get('user_id') or certificate.get('user_email')
-        if isinstance(cert_owner, ObjectId):
-            cert_owner = str(cert_owner)
-
-        # Check if user owns the certificate or is admin
-        if cert_owner != current_user['id'] and current_user['role'] != 'admin':
-            return jsonify({'error': 'Unauthorized access'}), 403
-
-        certificate['_id'] = str(certificate['_id'])
-        return jsonify(certificate), 200
-        
-    except Exception as e:
-        print(f"Get certificate error: {e}")
-        return jsonify({'error': 'Internal server error'}), 500
-
-# Admin routes
-@app.route('/api/admin/certificates', methods=['GET'])
+# ────────────────────────────────
+# ADMIN ROUTES
+# ────────────────────────────────
+@app.route("/api/admin/certificates", methods=["GET"])
 @jwt_required()
-def get_all_certificates():
-    try:
-        if not db_connection.check_connection():
-            return jsonify({'error': 'Database connection unavailable'}), 500
-            
-        identity = get_jwt_identity()
-        claims = get_jwt()
-        current_user = {'id': identity, 'email': claims.get('email'), 'role': claims.get('role')}
+def get_all_certificates_admin():
+    claims = get_jwt()
+    if claims.get("role") != "admin":
+        return jsonify({"error": "Admin access required"}), 403
 
-        if current_user['role'] != 'admin':
-            return jsonify({'error': 'Admin access required'}), 403
-        
-        certificates = list(certificates_collection.find().sort('uploaded_at', -1))
-        
-        # Populate user details and clean response
-        for cert in certificates:
-            cert['_id'] = str(cert['_id'])
-            user = users_collection.find_one({'_id': ObjectId(cert['user_id'])})
-            cert['user_name'] = user['name'] if user else 'Unknown'
-            cert['user_email'] = user['email'] if user else 'Unknown'
-            # Don't send file data in list
-            if 'file_data' in cert:
-                del cert['file_data']
-        
-        return jsonify(certificates), 200
-        
-    except Exception as e:
-        print(f"Admin get certificates error: {e}")
-        return jsonify({'error': 'Internal server error'}), 500
+    certs = list(certificates_collection.find())
+    for cert in certs:
+        cert["_id"] = str(cert["_id"])
+        cert["uploaded_at"] = cert.get("uploaded_at", datetime.utcnow()).isoformat()
 
-@app.route('/api/admin/certificates/<certificate_id>/verify', methods=['PUT'])
+        try:
+            user_obj_id = ObjectId(cert["user_id"])
+            user = users_collection.find_one({"_id": user_obj_id})
+        except Exception:
+            user = users_collection.find_one({"_id": cert["user_id"]})
+
+        cert["user_name"] = user["name"] if user else "Unknown"
+        cert["user_email"] = user["email"] if user else "Unknown"
+
+    return jsonify(certs), 200
+
+
+@app.route("/api/admin/certificates/<cert_id>/verify", methods=["PUT"])
 @jwt_required()
-def verify_certificate(certificate_id):
-    try:
-        if not db_connection.check_connection():
-            return jsonify({'error': 'Database connection unavailable'}), 500
-            
-        current_user = get_jwt_identity()
-        
-        if current_user['role'] != 'admin':
-            return jsonify({'error': 'Admin access required'}), 403
-        
-        data = request.get_json()
-        status = data.get('status', 'verified')
-        
-        if status not in ['verified', 'rejected']:
-            return jsonify({'error': 'Invalid status. Use "verified" or "rejected"'}), 400
-        
-        result = certificates_collection.update_one(
-            {'_id': ObjectId(certificate_id)},
-            {
-                '$set': {
-                    'status': status,
-                    'verified_at': datetime.utcnow(),
-                    'verified_by': current_user['id']
-                }
-            }
-        )
-        
-        if result.modified_count == 0:
-            return jsonify({'error': 'Certificate not found or already has this status'}), 404
-        
-        return jsonify({'message': f'Certificate {status} successfully'}), 200
-        
-    except Exception as e:
-        print(f"Verify certificate error: {e}")
-        return jsonify({'error': 'Internal server error'}), 500
+def update_certificate_status(cert_id):
+    claims = get_jwt()
+    if claims.get("role") != "admin":
+        return jsonify({"error": "Admin access required"}), 403
 
-@app.route('/api/admin/users', methods=['GET'])
+    data = request.get_json()
+    new_status = data.get("status")
+
+    if new_status not in ["verified", "rejected"]:
+        return jsonify({"error": "Invalid status"}), 400
+
+    res = certificates_collection.update_one(
+         {"_id": ObjectId(cert_id)},
+        {"$set": {"status": new_status}},
+    )
+
+    if res.modified_count == 0:
+        return jsonify({"error": "Certificate not found"}), 404
+
+    return jsonify({"message": f"Certificate {new_status} successfully"}), 200
+
+
+@app.route("/api/admin/users", methods=["GET"])
 @jwt_required()
-def get_all_users():
-    try:
-        if not db_connection.check_connection():
-            return jsonify({'error': 'Database connection unavailable'}), 500
-            
-        current_user = get_jwt_identity()
-        
-        if current_user['role'] != 'admin':
-            return jsonify({'error': 'Admin access required'}), 403
-        
-        users = list(users_collection.find({}, {'password': 0}).sort('created_at', -1))
-        
-        # Convert ObjectId to string
-        for user in users:
-            user['_id'] = str(user['_id'])
-        
-        return jsonify(users), 200
-        
-    except Exception as e:
-        print(f"Get users error: {e}")
-        return jsonify({'error': 'Internal server error'}), 500
+def list_users():
+    claims = get_jwt()
+    if claims.get("role") != "admin":
+        return jsonify({"error": "Admin access required"}), 403
 
-if __name__ == '__main__':
-    print("🚀 Starting Certificate Verification System...")
-    print("📊 Database Status:", "Connected" if db_connection.check_connection() else "Disconnected")
-    app.run(debug=True, port=5000)
-    
-    
+    users = list(users_collection.find({}, {"password": 0}))
+    for u in users:
+        u["_id"] = str(u["_id"])
+    return jsonify(users), 200
 
+
+# ────────────────────────────────
+if __name__ == "__main__":
+    app.run(debug=True)

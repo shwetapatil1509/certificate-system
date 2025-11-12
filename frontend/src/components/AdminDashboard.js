@@ -1,20 +1,20 @@
-import React, { useState, useEffect, useContext } from 'react';
-import { getAllCertificates, verifyCertificate } from '../api';
-import { AuthContext } from '../context/AuthContext';
-import './Dashboard.css';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect, useContext } from "react";
+import { getAllCertificates, verifyCertificate } from "../api";
+import { AuthContext } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
+import "./Dashboard.css";
 
 const AdminDashboard = () => {
   const { token, user } = useContext(AuthContext);
   const [certificates, setCertificates] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
 
   useEffect(() => {
-    // Check if user exists and has token
-    if (!user || !token) {
-      setError('Please log in to access this page.');
-      setLoading(false);
+    // Redirect non-admin users
+    if (!user || user.role !== "admin") {
+      navigate("/dashboard");
       return;
     }
 
@@ -26,10 +26,10 @@ const AdminDashboard = () => {
       setLoading(true);
       const response = await getAllCertificates(token);
       setCertificates(response.data);
-      setError('');
+      setError("");
     } catch (err) {
-      console.error('Error fetching certificates:', err);
-      setError(err.response?.data?.error || 'Failed to fetch certificates');
+      console.error("Error fetching certificates:", err);
+      setError(err.response?.data?.error || "Failed to fetch certificates");
     } finally {
       setLoading(false);
     }
@@ -38,21 +38,20 @@ const AdminDashboard = () => {
   const handleVerify = async (certId, status) => {
     try {
       await verifyCertificate(certId, status, token);
-      // Refresh certificates list
-      fetchCertificates();
+      fetchCertificates(); // Refresh list
     } catch (err) {
-      console.error('Error verifying certificate:', err);
-      setError(err.response?.data?.error || 'Failed to verify certificate');
+      console.error("Error verifying certificate:", err);
+      setError(err.response?.data?.error || "Failed to verify certificate");
     }
   };
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+    return new Date(dateString).toLocaleDateString("en-IN", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
@@ -86,8 +85,8 @@ const AdminDashboard = () => {
         </div>
       ) : (
         <div className="certificates-section">
-          <h3>Uploaded Certificates ({certificates.length})</h3>
-          
+          <h3>All Uploaded Certificates ({certificates.length})</h3>
+
           {certificates.length === 0 ? (
             <div className="no-certificates">
               <p>No certificates uploaded yet.</p>
@@ -101,54 +100,51 @@ const AdminDashboard = () => {
                     <th>User</th>
                     <th>Status</th>
                     <th>Upload Date</th>
-                    <th>File Type</th>
+                    <th>File Name</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {certificates.map((cert) => (
                     <tr key={cert._id}>
-                      <td className="cert-title">
-                        {cert.title || 'Untitled'}
-                      </td>
-                      <td className="user-info">
-                        <div>
-                          <strong>{cert.user_name}</strong>
-                          <br />
-                          <small>{cert.user_email}</small>
-                        </div>
+                      <td>{cert.title || "Untitled"}</td>
+                      <td>
+                        <strong>{cert.user_name}</strong>
+                        <br />
+                        <small>{cert.user_email}</small>
                       </td>
                       <td>
                         <span className={`status-badge status-${cert.status}`}>
                           {cert.status}
                         </span>
                       </td>
-                      <td className="date-cell">
-                        {formatDate(cert.uploaded_at)}
-                      </td>
-                      <td className="file-info">
-                        {cert.file_name}
-                      </td>
-                      <td className="actions-cell">
-                        {cert.status === 'pending' && (
+                      <td>{formatDate(cert.uploaded_at)}</td>
+                      <td>{cert.file_name}</td>
+                      <td>
+                        {cert.status === "pending" ? (
                           <div className="action-buttons">
                             <button
                               className="btn-approve"
-                              onClick={() => handleVerify(cert._id, 'verified')}
+                              onClick={() =>
+                                handleVerify(cert._id, "verified")
+                              }
                             >
                               Verify
                             </button>
                             <button
                               className="btn-reject"
-                              onClick={() => handleVerify(cert._id, 'rejected')}
+                              onClick={() =>
+                                handleVerify(cert._id, "rejected")
+                              }
                             >
                               Reject
                             </button>
                           </div>
-                        )}
-                        {cert.status !== 'pending' && (
+                        ) : (
                           <span className="status-text">
-                            {cert.status === 'verified' ? 'Approved' : 'Rejected'}
+                            {cert.status === "verified"
+                              ? "Approved"
+                              : "Rejected"}
                           </span>
                         )}
                       </td>
@@ -161,8 +157,35 @@ const AdminDashboard = () => {
         </div>
       )}
 
-      <div>
-        <Link  to="/dashboard">Back to User Dashboard</Link>
+      {/* ✅ Navigation Buttons */}
+      <div style={{ marginTop: "20px", display: "flex", gap: "15px" }}>
+        <button
+          onClick={() => navigate("/upload")}
+          style={{
+            backgroundColor: "white",
+            color: "purple",
+            border: "1px solid purple",
+            borderRadius: "8px",
+            padding: "10px 20px",
+            cursor: "pointer",
+          }}
+        >
+          Back to Upload Page
+        </button>
+
+        <button
+          onClick={() => navigate("/verify-certificate")}
+          style={{
+            backgroundColor: "purple",
+            color: "white",
+            border: "none",
+            borderRadius: "8px",
+            padding: "10px 20px",
+            cursor: "pointer",
+          }}
+        >
+          Go to Certificate Verification Page
+        </button>
       </div>
     </div>
   );

@@ -1,31 +1,45 @@
+// src/api.js
 import axios from 'axios';
 
+// Base URL of your Flask backend
 const API_URL = 'http://127.0.0.1:5000/api';
 
-// Auth APIs
-export const registerUser = (data) => axios.post(`${API_URL}/register`, data);
-export const loginUser = (data) => axios.post(`${API_URL}/login`, data);
+// Create axios instance
+const API = axios.create({
+  baseURL: API_URL,
+});
 
-// Certificate APIs
-export const uploadCertificate = (formData, token) =>
-  axios.post(`${API_URL}/certificates`, formData, {
+// ✅ Automatically attach token to every request
+API.interceptors.request.use((req) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    req.headers.Authorization = `Bearer ${token}`;
+  }
+  return req;
+});
+
+// ============================
+// AUTH ROUTES
+// ============================
+export const registerUser = (data) => API.post('/register', data);
+export const loginUser = (data) => API.post('/login', data);
+
+// ============================
+// CERTIFICATE ROUTES (USER)
+// ============================
+export const uploadCertificate = (formData) =>
+  API.post('/certificates', formData, {
     headers: {
-      Authorization: `Bearer ${token}`,
-      // Do not set Content-Type explicitly so axios can add the correct boundary
+      'Content-Type': 'multipart/form-data',
     },
   });
 
-export const getUserCertificates = (token) =>
-  axios.get(`${API_URL}/user/certificates`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export const getUserCertificates = () => API.get('/certificates');
 
-export const getAllCertificates = (token) =>
-  axios.get(`${API_URL}/certificates`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+// ============================
+// ADMIN ROUTES
+// ============================
+export const getAllCertificates = () => API.get('/certificates');
 
-export const verifyCertificate = (id, status, token) =>
-  axios.put(`${API_URL}/admin/certificates/${id}/verify`, { status }, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export const verifyCertificate = (id, status) =>
+  API.put(`/admin/certificates/${id}/verify`, { status });
