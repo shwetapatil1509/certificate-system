@@ -8,6 +8,8 @@ from bson import ObjectId
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 import os
+import cloudinary.uploader
+import cloudinary_config
 import bcrypt
 import base64
 
@@ -82,32 +84,48 @@ def login():
 @app.route("/api/certificates", methods=["POST"])
 @jwt_required()
 def upload_certificate():
-    claims = get_jwt()
-    user_id = get_jwt_identity()
-    role = claims.get("role")
+    try:
+        claims = get_jwt()
+        user_id = get_jwt_identity()
+        role = claims.get("role")
 
-    title = request.form.get("title")
-    file = request.files.get("file")
+        title = request.form.get("title")
+        file = request.files.get("file")
 
-    if not file or not title:
-        return jsonify({"error": "Missing file or title"}), 400
+        if not file or not title:
+            return jsonify({"error": "Missing file or title"}), 400
 
-    # save file on disk
-    upload_dir = "uploads"
-    os.makedirs(upload_dir, exist_ok=True)
-    file_path = os.path.join(upload_dir, file.filename)
-    file.save(file_path)
+        # Upload file to Cloudinary
+        upload_result = cloudinary.uploader.upload(
+            file,
+            folder="academic_certificates",
+            resource_type="auto"   # auto handles PDF, PNG, JPG etc.
+        )
+#   upload_dir = "uploads"
+#     os.makedirs(upload_dir, exist_ok=True)
+#     file_path = os.path.join(upload_dir, file.filename)
+#     file.save(file_path)
 
-    certificate = {
-        "user_id": user_id,
-        "title": title,
-        "file_name": file.filename,
-        "file_path": file_path,
-        "status": "pending",
-        "uploaded_at": datetime.utcnow(),
-    }
-    certificates_collection.insert_one(certificate)
-    return jsonify({"message": "Certificate uploaded successfully"}), 201
+        # Insert into MongoDB
+        certificate = {
+            "user_id": user_id,
+            "title": title,
+            "file_name": file.filename,        # original name
+            "certificate_url": upload_result["secure_url"], # CLOUDINARY URL
+            "public_id": upload_result["public_id"],        # for delete/update
+            "status": "pending",
+            "uploaded_at": datetime.utcnow(),
+        }
+
+        certificates_collection.insert_one(certificate)
+
+        return jsonify({
+            "message": "Certificate uploaded successfully",
+            "certificate_url": upload_result["secure_url"]
+        }), 201
+    
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route("/api/certificates", methods=["GET"])
@@ -190,6 +208,67 @@ def list_users():
         u["_id"] = str(u["_id"])
     return jsonify(users), 200
 
+@app.route("/api/certificate/<cert_id>/view", methods=["GET"])
+@jwt_required()
+def view_certificate(cert_id):
+    """
+    Returns or redirects to the Cloudinary certificate URL.
+    Only admin or owner of certificate can access.
+    """
+    user_id = get_jwt_identity()
+    claims = get_jwt()
+    role = claims.get("role")
+
+    # Fetch certificate from MongoDB
+    cert = certificates_collection.find_one({"_id": ObjectId(cert_id)})
+    if not cert:
+        return jsonify({"error": "Certificate not found"}), 404
+
+    # Authorization: Admin or owner
+    if role != "admin" and cert["user_id"] != user_id:
+        return jsonify({"error": "Unauthorized"}), 403
+
+    # Option 1: Redirect to Cloudinary URL
+    return redirect(cert.get("certificate_url"))
+
+    # Option 2 (alternative): Return JSON URL
+    # return jsonify({"certificate_url": cert.get("certificate_url")})
+
+@app.route('/api/check_certificate/<cert_id>', methods=['GET'])
+@jwt_required()
+def check_certificate(cert_id):
+    try:
+        if not ObjectId.is_valid(cert_id):
+            return jsonify({"error": "Invalid certificate ID"}), 400
+
+        certificate = certificates_collection.find_one({"_id": ObjectId(cert_id)})
+        if not certificate:
+            return jsonify({"valid": False, "message": "Certificate not found"}), 404
+
+        public_id = certificate.get("public_id")
+        if not public_id:
+            return jsonify({"valid": False, "message": "Image missing"}), 404
+
+        # Check in Cloudinary
+        try:
+            cloudinary.api.resource(public_id)
+            return jsonify({
+                "valid": True,
+                "message": "Certificate is original",
+                "cloudinary_url": certificate["cloudinary_url"],
+                "title": certificate["title"],
+                "user_id": certificate["user_id"],
+                "status": certificate["status"]
+            }), 200
+
+        except cloudinary.exceptions.NotFound:
+            return jsonify({
+                "valid": False,
+                "message": "FAKE / Image not found in Cloudinary"
+            }), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 # ────────────────────────────────
 if __name__ == "__main__":
