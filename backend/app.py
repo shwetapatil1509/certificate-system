@@ -14,14 +14,17 @@ import bcrypt
 import base64
 
 # Import your MongoDB helper functions
-from database import get_database, get_users_collection, get_certificates_collection, db_connection
+from database import get_database, get_original_data_collection, get_users_collection, get_certificates_collection, db_connection
 
 # ────────────────────────────────
 # Setup
 # ────────────────────────────────
 load_dotenv()
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "*"}},
+     supports_credentials=True,
+     allow_headers=["Content-Type", "Authorization"],
+     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
 
 app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY", "secret123")
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(days=1)
@@ -29,6 +32,7 @@ jwt = JWTManager(app)
 
 users_collection = get_users_collection()
 certificates_collection = get_certificates_collection()
+original_data_collection = get_original_data_collection()
 
 # ────────────────────────────────
 # AUTH
@@ -175,25 +179,78 @@ def get_all_certificates_admin():
 @app.route("/api/admin/certificates/<cert_id>/verify", methods=["PUT"])
 @jwt_required()
 def update_certificate_status(cert_id):
-    claims = get_jwt()
-    if claims.get("role") != "admin":
-        return jsonify({"error": "Admin access required"}), 403
+    print("🔵 API HIT: certificates route") 
+    try:
+        data = request.get_json()
+        status = data.get("status")
 
-    data = request.get_json()
-    new_status = data.get("status")
+        if status not in ["verified", "rejected"]:
+            return jsonify({"error": "Invalid status"}), 400
 
-    if new_status not in ["verified", "rejected"]:
-        return jsonify({"error": "Invalid status"}), 400
+        # Fetch certificate from certificates collection
+        cert = certificates_collection.find_one({"_id": ObjectId(cert_id)})
+        if not cert:
+            return jsonify({"error": "Certificate not found"}), 404
 
-    res = certificates_collection.update_one(
-         {"_id": ObjectId(cert_id)},
-        {"$set": {"status": new_status}},
-    )
+        # Debug: show certificate data
+        cert_debug = {
+            "cert_id": str(cert.get("_id")),
+            "public_id": cert.get("public_id"),
+            "file_name": cert.get("file_name"),
+            "title": cert.get("title"),
+            "status": cert.get("status"),
+        }
 
-    if res.modified_count == 0:
-        return jsonify({"error": "Certificate not found"}), 404
+        # Direct reject
+        if status == "rejected":
+            certificates_collection.update_one(
+                {"_id": ObjectId(cert_id)},
+                {"$set": {"status": "rejected"}}
+            )
+            return jsonify({
+                "message": "Certificate rejected",
+                "certificate": cert_debug,
+                "original_data_match": None
+            }), 200
 
-    return jsonify({"message": f"Certificate {new_status} successfully"}), 200
+        # VERIFY → Check Original_data using PUBLIC ID
+        original = original_data_collection.find_one({
+            "public_id": cert.get("public_id")
+        })
+
+        # Debug: show original data or None
+        original_debug = None
+        if original:
+            original_debug = {
+                "original_id": str(original.get("_id")),
+                "public_id": original.get("public_id"),
+                "file_name": original.get("file_name"),
+                "title": original.get("title")
+            }
+
+        if original:
+            certificates_collection.update_one(
+                {"_id": ObjectId(cert_id)},
+                {"$set": {"status": "verified"}}
+            )
+            return jsonify({
+                "message": "Certificate verified SSSuccessfully",
+                "certificate": cert_debug,
+                "original_data_match": original_debug
+            }), 200
+        else:
+            certificates_collection.update_one(
+                {"_id": ObjectId(cert_id)},
+                {"$set": {"status": "rejected"}}
+            )
+            return jsonify({
+                "message": "FAKE certificate! Rejected",
+                "certificate": cert_debug,
+                "original_data_match": None
+            }), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route("/api/admin/users", methods=["GET"])

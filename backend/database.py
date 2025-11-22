@@ -34,6 +34,7 @@ class DatabaseConnection:
             # Initialize collections
             self.users_collection = self.db.users
             self.certificates_collection = self.db.certificates
+            self.original_data_collection = self.db.Original_data
             
             # Create indexes for better performance
             self.create_indexes()
@@ -122,3 +123,7 @@ def get_users_collection():
 def get_certificates_collection():
     """Get certificates collection"""
     return db_connection.certificates_collection
+
+def get_original_data_collection():
+    """Get original data collection"""
+    return db_connection.original_data_collection

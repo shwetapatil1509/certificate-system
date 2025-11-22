@@ -23,20 +23,20 @@ const VerifyCertificate = () => {
     }
   };
 
-  const handleVerify = async (status) => {
-    try {
-      await axios.put(
-        `http://127.0.0.1:5000/api/admin/certificates/${certificateId}/verify`,
-        { status },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      setMessage(`Certificate ${status} successfully.`);
-    } catch (err) {
-      setMessage("Failed to update status.");
-    }
-  };
+  // const handleVerify = async (status) => {
+  //   try {
+  //     await axios.put(
+  //       `http://127.0.0.1:5000/api/admin/certificates/${certificateId}/verify`,
+  //       { status },
+  //       {
+  //         headers: { Authorization: `Bearer ${token}` },
+  //       }
+  //     );
+  //     setMessage(`Certificate ${status} successfully.`);
+  //   } catch (err) {
+  //     setMessage("Failed to update status.");
+  //   }
+  // };
 
   return (
     <div className="dashboard-container">
@@ -62,7 +62,7 @@ const VerifyCertificate = () => {
 
           <div style={{ marginTop: "10px" }}>
             <button
-              onClick={() => handleVerify("verified")}
+              // onClick={() => handleVerify("verified")}
               style={{
                 backgroundColor: "green",
                 color: "white",
@@ -77,7 +77,7 @@ const VerifyCertificate = () => {
             </button>
 
             <button
-              onClick={() => handleVerify("rejected")}
+              // onClick={() => handleVerify("rejected")}
               style={{
                 backgroundColor: "red",
                 color: "white",

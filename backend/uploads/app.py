@@ -379,43 +379,6 @@ def get_all_certificates():
         print(f"Admin get certificates error: {e}")
         return jsonify({'error': 'Internal server error'}), 500
 
-@app.route('/api/admin/certificates/<certificate_id>/verify', methods=['PUT'])
-@jwt_required()
-def verify_certificate(certificate_id):
-    try:
-        if not db_connection.check_connection():
-            return jsonify({'error': 'Database connection unavailable'}), 500
-            
-        current_user = get_jwt_identity()
-        
-        if current_user['role'] != 'admin':
-            return jsonify({'error': 'Admin access required'}), 403
-        
-        data = request.get_json()
-        status = data.get('status', 'verified')
-        
-        if status not in ['verified', 'rejected']:
-            return jsonify({'error': 'Invalid status. Use "verified" or "rejected"'}), 400
-        
-        result = certificates_collection.update_one(
-            {'_id': ObjectId(certificate_id)},
-            {
-                '$set': {
-                    'status': status,
-                    'verified_at': datetime.utcnow(),
-                    'verified_by': current_user['id']
-                }
-            }
-        )
-        
-        if result.modified_count == 0:
-            return jsonify({'error': 'Certificate not found or already has this status'}), 404
-        
-        return jsonify({'message': f'Certificate {status} successfully'}), 200
-        
-    except Exception as e:
-        print(f"Verify certificate error: {e}")
-        return jsonify({'error': 'Internal server error'}), 500
 
 @app.route('/api/admin/users', methods=['GET'])
 @jwt_required()
@@ -440,60 +403,9 @@ def get_all_users():
     except Exception as e:
         print(f"Get users error: {e}")
         return jsonify({'error': 'Internal server error'}), 500
-@app.route('/api/admin/certificates/<string:cert_id>/verify', methods=['PUT'])
-@jwt_required()
-def verify_certificate(cert_id):
-    """
-    Admin endpoint to verify or reject a certificate.
-    """
-    try:
-        # ✅ Get current user identity
-        claims = get_jwt()
-        admin_email = claims.get("email")
-        role = claims.get("role")
+    
 
-        # 🛑 Allow only admins
-        if role != "admin":
-            return jsonify({"error": "Access denied. Admins only."}), 403
-
-        data = request.get_json()
-        status = data.get("status")
-
-        if status not in ["verified", "rejected"]:
-            return jsonify({"error": "Invalid status"}), 400
-
-        # ✅ Find the certificate
-        certs_col = get_certificates_collection()
-        certificate = certs_col.find_one({"_id": ObjectId(cert_id)})
-
-        if not certificate:
-            return jsonify({"error": "Certificate not found"}), 404
-
-        # ✅ Update verification info
-        certs_col.update_one(
-            {"_id": ObjectId(cert_id)},
-            {
-                "$set": {
-                    "status": status,
-                    "verified_at": datetime.utcnow(),
-                    "verified_by": admin_email
-                }
-            }
-        )
-
-        # ✅ Return updated certificate data
-        updated_cert = certs_col.find_one({"_id": ObjectId(cert_id)})
-        updated_cert["_id"] = str(updated_cert["_id"])
-
-        return jsonify({
-            "message": f"Certificate {status} successfully.",
-            "certificate": updated_cert
-        }), 200
-
-    except Exception as e:
-        print(f"❌ Verification error: {e}")
-        return jsonify({"error": str(e)}), 500
-
+    
 
 if __name__ == '__main__':
     print("🚀 Starting Certificate Verification System...")

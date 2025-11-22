@@ -41,5 +41,15 @@ export const getUserCertificates = () => API.get('/certificates');
 // ============================
 export const getAllCertificates = () => API.get('/certificates');
 
-export const verifyCertificate = (id, status) =>
-  API.put(`/admin/certificates/${id}/verify`, { status });
+export const verifyCertificate = async (id, status, token) => {
+  const res = await API.put(
+    `/admin/certificates/${id}/verify`,
+    { status },
+    {
+      headers: { Authorization: `Bearer ${token}` }
+    }
+  );
+
+  return res.data;  // return real JSON
+};
+
