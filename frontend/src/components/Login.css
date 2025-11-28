@@ -1,8 +1,8 @@
-/* Full-page gradient background */
+/* Full-page dark gradient background */
 body {
   margin: 0;
   font-family: 'Poppins', sans-serif;
-  background: linear-gradient(135deg, #1e3c72, #2a5298);
+  background: linear-gradient(135deg, #0a0f24, #1a233a);
   height: 100vh;
   display: flex;
   justify-content: center;
@@ -11,12 +11,12 @@ body {
 
 /* Centered login card */
 .auth-container {
-  background: rgba(255, 255, 255, 0.95);
+  background: rgba(30, 41, 59, 0.9); /* Dark slate card */
   padding: 40px 50px;
   border-radius: 25px;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
   text-align: center;
-  width: 100%;
+  width: 70%;
   max-width: 400px;
   animation: fadeIn 0.6s ease-in-out;
 }
@@ -24,8 +24,9 @@ body {
 /* Heading style */
 .auth-container h2 {
   margin-bottom: 20px;
-  color: #222;
+  color: #E2E8F0; /* Light blue-gray */
   font-size: 28px;
+  font-weight: bold;
 }
 
 /* Input fields */
@@ -35,21 +36,26 @@ body {
   margin: 10px 0;
   border: none;
   border-radius: 10px;
-  background: #f0f0f0;
+  background: #1e293b; /* Dark input */
+  color: #E2E8F0;
   font-size: 15px;
   transition: 0.3s ease;
 }
 
+.auth-container input::placeholder {
+  color: #94A3B8;
+}
+
 .auth-container input:focus {
   outline: none;
-  background: #e8f0fe;
-  box-shadow: 0 0 6px rgba(30, 60, 114, 0.5);
+  background: #243044;
+  box-shadow: 0 0 6px rgba(59, 130, 246, 0.5);
 }
 
 /* Login button */
 .auth-container button {
   width: 100%;
-  background: linear-gradient(to right, #007bff, #00b4db);
+  background: linear-gradient(to right, #3b82f6, #06b6d4);
   color: white;
   padding: 12px;
   border: none;
@@ -62,7 +68,7 @@ body {
 }
 
 .auth-container button:hover {
-  background: linear-gradient(to right, #0056b3, #0099cc);
+  background: linear-gradient(to right, #2563eb, #0891b2);
   transform: scale(1.02);
 }
 
@@ -70,13 +76,14 @@ body {
 .auth-container p {
   margin-top: 10px;
   font-size: 14px;
+  color: #F87171; /* Soft red */
 }
 
 /* Register link */
 .auth-container .link {
   display: block;
   margin-top: 15px;
-  color: #4b0082;
+  color: #60A5FA; /* Light blue link */
   text-decoration: none;
   font-weight: 500;
 }

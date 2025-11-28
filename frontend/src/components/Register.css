@@ -1,29 +1,30 @@
 .password-wrapper {
   position: relative;
- 
 }
- .password-wrapper input {
+
+.password-wrapper input {
   padding-right: 40px; 
 }
 
+/* Eye icon */
 .toggle-password {
   position: absolute;
   right: 12px;
   top: 50%;
   transform: translateY(-50%);
   cursor: pointer;
-  color: #2563eb;
+  color: #60A5FA; /* Light blue for dark mode */
   transition: 0.3s;
 }
 
 .toggle-password:hover {
-  color: #1e40af;
+  color: #3B82F6; /* Brighter hover blue */
 }
 
+/* Error message */
 .error-msg {
-  color: #ef4444;
+  color: #F87171; /* Soft red */
   text-align: center;
   margin-top: 12px;
   font-size: 14px;
 }
-

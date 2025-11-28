@@ -1,215 +1,162 @@
-/* body {
-  background: #eef2ff;
-  font-family: 'Poppins', sans-serif;
-}
-
+/* 🌙 Main Container */
 .dashboard-container {
-  margin: 60px auto;
-  width: 90%;
-  max-width: 1000px;
-  background: #fff;
+  min-height: 100vh;
   padding: 30px;
-  border-radius: 12px;
-  margin-bottom: 24px;
+  background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+  font-family: "Poppins", sans-serif;
+  color: #e5e7eb;
+}
+
+/* Header */
+.dashboard-header h2 {
+  color: #a78bfa;
+  margin-bottom: 5px;
   text-align: center;
 }
 
-.loading-message {
+.dashboard-header p {
+  color: #c7c9d1;
   text-align: center;
-  color: #6b7280;
-  padding: 40px;
-  font-size: 16px;
 }
 
-.no-certificates {
+/* Error Message */
+.error-message {
+  margin: 15px 0;
+  padding: 12px;
+  background: rgba(239, 68, 68, 0.15);
+  border-left: 4px solid #ef4444;
+  color: #fca5a5;
+  border-radius: 8px;
+}
+
+/* Loading */
+.loading-message p {
   text-align: center;
-  color: #6b7280;
-  padding: 40px;
-  background: #f9fafb;
-  border-radius: 12px;
-  font-size: 16px;
+  color: #a78bfa;
+  font-size: 18px;
 }
 
 /* Certificates Section */
-.certificates-section h3 {
-  color: #1f2937;
-  font-size: 20px;
-  font-weight: 600;
-  margin-bottom: 20px;
-  border-bottom: 2px solid #e5e7eb;
-  padding-bottom: 8px;
+.certificates-section {
+  margin-top: 20px;
 }
 
-/* Table Styles */
+.certificates-section h3 {
+  color: #c4b5fd;
+  margin-bottom: 15px;
+}
+
+/* Table Container */
 .table-container {
   overflow-x: auto;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 20px;
   border-radius: 12px;
-  border: 1px solid #e5e7eb;
-  background: white;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+/* Table */
 .certificates-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 14px;
+  color: #e5e7eb;
 }
 
 .certificates-table th {
-  background: linear-gradient(135deg, #4f46e5, #3b82f6);
-  color: white;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #d1d5db;
   font-weight: 600;
-  padding: 16px 12px;
   text-align: left;
-  border-bottom: 2px solid #3730a3;
 }
 
 .certificates-table td {
-  padding: 16px 12px;
-  border-bottom: 1px solid #f3f4f6;
-  vertical-align: top;
-}
-
-.certificates-table tbody tr:hover {
-  background-color: #f8fafc;
-}
-
-.certificates-table tbody tr:nth-child(even) {
-  background-color: #fafbfc;
-}
-
-/* Table Cell Styles */
-.cert-title {
-  font-weight: 600;
-  color: #1f2937;
-  max-width: 200px;
-  word-wrap: break-word;
-}
-
-.user-info strong {
-  color: #1f2937;
-  font-size: 14px;
-}
-
-.user-info small {
-  color: #6b7280;
-  font-size: 12px;
-}
-
-.date-cell {
-  color: #6b7280;
-  font-size: 13px;
-}
-
-.file-info {
-  color: #374151;
-  font-size: 13px;
-  max-width: 150px;
-  word-wrap: break-word;
+  padding: 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 /* Status Badges */
 .status-badge {
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-}
-
-.status-pending {
-  background: #fef3c7;
-  color: #d97706;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: bold;
+  text-transform: capitalize;
 }
 
 .status-verified {
-  background: #dcfce7;
-  color: #16a34a;
+  background: rgba(16, 185, 129, 0.2);
+  color: #34d399;
+  border: 1px solid #10b981;
 }
 
 .status-rejected {
-  background: #fee2e2;
-  color: #dc2626;
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+  border: 1px solid #ef4444;
+}
+
+.status-pending {
+  background: rgba(234, 179, 8, 0.2);
+  color: #facc15;
+  border: 1px solid #eab308;
 }
 
 /* Action Buttons */
-.actions-cell {
-  min-width: 120px;
-}
-
-.action-buttons {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
+.action-buttons button,
+.btn-view {
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  border: none;
+  transition: 0.2s;
 }
 
 .btn-approve {
-  background: linear-gradient(135deg, #10b981, #059669);
+  background: #10b981;
   color: white;
-  border: none;
-  padding: 8px 12px;
-  border-radius: 8px;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
 }
 
 .btn-approve:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  background: #059669;
 }
 
 .btn-reject {
-  background: linear-gradient(135deg, #ef4444, #dc2626);
+  background: #ef4444;
   color: white;
-  border: none;
-  padding: 8px 12px;
-  border-radius: 8px;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
 }
 
 .btn-reject:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+  background: #b91c1c;
 }
 
+.btn-view {
+  background: #3b82f6;
+  color: white;
+}
+
+.btn-view:hover {
+  background: #2563eb;
+}
+
+/* Status Text (After verification) */
 .status-text {
-  color: #6b7280;
-  font-size: 13px;
-  font-style: italic;
+  font-weight: 600;
+  color: #a78bfa;
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
-  .dashboard-container {
-    margin: 20px auto;
-    padding: 20px;
-    width: 98%;
-  }
-  
-  .certificates-table {
-    font-size: 12px;
-  }
-  
-  .certificates-table th,
-  .certificates-table td {
-    padding: 12px 8px;
-  }
-  
-  .dashboard-header h2 {
-    font-size: 24px;
-  }
-  
-  .action-buttons {
-    flex-direction: column;
-  }
-  
-  .btn-approve,
-  .btn-reject {
-    width: 100%;
-    margin-bottom: 4px;
-  }
+/* No certificates */
+.no-certificates {
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  text-align: center;
+  color: #cbd5e1;
+}
+
+/* Navigation Buttons */
+button {
+  font-family: "Poppins", sans-serif;
 }

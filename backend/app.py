@@ -13,6 +13,8 @@ import cloudinary_config
 import bcrypt
 import base64
 
+
+
 # Import your MongoDB helper functions
 from database import get_database, get_original_data_collection, get_users_collection, get_certificates_collection, db_connection
 
@@ -179,7 +181,8 @@ def get_all_certificates_admin():
 @app.route("/api/admin/certificates/<cert_id>/verify", methods=["PUT"])
 @jwt_required()
 def update_certificate_status(cert_id):
-    print("🔵 API HIT: certificates route") 
+    print("🔵 API HIT: certificates route")
+
     try:
         data = request.get_json()
         status = data.get("status")
@@ -187,12 +190,18 @@ def update_certificate_status(cert_id):
         if status not in ["verified", "rejected"]:
             return jsonify({"error": "Invalid status"}), 400
 
-        # Fetch certificate from certificates collection
-        cert = certificates_collection.find_one({"_id": ObjectId(cert_id)})
+        # Validate ObjectId
+        try:
+            cert_obj_id = ObjectId(cert_id)
+        except Exception:
+            return jsonify({"error": "Invalid certificate ID"}), 400
+
+        # Fetch certificate
+        cert = certificates_collection.find_one({"_id": cert_obj_id})
         if not cert:
             return jsonify({"error": "Certificate not found"}), 404
 
-        # Debug: show certificate data
+        # Debug info
         cert_debug = {
             "cert_id": str(cert.get("_id")),
             "public_id": cert.get("public_id"),
@@ -204,7 +213,7 @@ def update_certificate_status(cert_id):
         # Direct reject
         if status == "rejected":
             certificates_collection.update_one(
-                {"_id": ObjectId(cert_id)},
+                {"_id": cert_obj_id},
                 {"$set": {"status": "rejected"}}
             )
             return jsonify({
@@ -213,12 +222,11 @@ def update_certificate_status(cert_id):
                 "original_data_match": None
             }), 200
 
-        # VERIFY → Check Original_data using PUBLIC ID
+        # VERIFY — MATCH USING PUBLIC ID
         original = original_data_collection.find_one({
             "public_id": cert.get("public_id")
         })
 
-        # Debug: show original data or None
         original_debug = None
         if original:
             original_debug = {
@@ -228,19 +236,22 @@ def update_certificate_status(cert_id):
                 "title": original.get("title")
             }
 
+        # MATCH FOUND → VERIFIED
         if original:
             certificates_collection.update_one(
-                {"_id": ObjectId(cert_id)},
+                {"_id": cert_obj_id},
                 {"$set": {"status": "verified"}}
             )
             return jsonify({
-                "message": "Certificate verified SSSuccessfully",
+                "message": "Certificate verified successfully",
                 "certificate": cert_debug,
                 "original_data_match": original_debug
             }), 200
+
+        # NOT FOUND → REJECTED
         else:
             certificates_collection.update_one(
-                {"_id": ObjectId(cert_id)},
+                {"_id": cert_obj_id},
                 {"$set": {"status": "rejected"}}
             )
             return jsonify({
@@ -249,8 +260,10 @@ def update_certificate_status(cert_id):
                 "original_data_match": None
             }), 200
 
+
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
 
 
 @app.route("/api/admin/users", methods=["GET"])
@@ -326,6 +339,23 @@ def check_certificate(cert_id):
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+# 🔍 GET Certificate by ID (Used in Verify.js)
+@app.route("/api/certificates/<cert_id>", methods=["GET"])
+@jwt_required()
+def get_certificate_by_id(cert_id):
+    cert = certificates_collection.find_one({"_id": ObjectId(cert_id)})
+    if not cert:
+        return jsonify({"error": "Certificate not found"}), 404
+
+    user = users_collection.find_one({"_id": ObjectId(cert["user_id"])})
+    user_name = user.get("name") if user else "Unknown User"
+
+    cert["_id"] = str(cert["_id"])
+    cert["user_id"] = str(cert["user_id"])
+    cert["user_name"] = user_name
+
+    return jsonify(cert), 200
+
 
 # ────────────────────────────────
 if __name__ == "__main__":

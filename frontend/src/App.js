@@ -5,7 +5,8 @@ import Register from "./components/Register";
 import Dashboard from "./components/Dashboard";
 import AdminDashboard from "./components/AdminDashboard";
 import UploadCertificate from "./components/UploadCertificate";
-import VerifyCertificate from "./components/VerifyCertificate"; // ✅ Import the verification page
+import VerifyCertificate from "./components/VerifyCertificate"; // ✅ Verification page
+
 import { AuthContext } from "./context/AuthContext";
 import "./App.css";
 
@@ -35,7 +36,7 @@ const App = () => {
               <>
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/upload" element={<UploadCertificate />} />
-                {/* Default redirect for user */}
+                {/* Default redirect for regular user */}
                 <Route path="*" element={<Navigate to="/dashboard" />} />
               </>
             )}

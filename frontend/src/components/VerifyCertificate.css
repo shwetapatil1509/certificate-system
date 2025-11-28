@@ -1,30 +1,38 @@
+/* 🌙 Full-page Dark Background */
 .verify-page {
   display: flex;
   justify-content: center;
   align-items: center;
   height: 100vh;
-  background: linear-gradient(135deg, #6a1b9a, #8e24aa);
+  background: linear-gradient(135deg, #0a0f24, #1a2650);
   font-family: 'Poppins', sans-serif;
 }
 
+/* 📄 Dark Glass Card */
 .verify-card {
-  background: #fff;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   padding: 40px;
   border-radius: 15px;
   width: 400px;
-  box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+  box-shadow: 0 5px 25px rgba(0,0,0,0.5);
   text-align: center;
 }
 
+/* 🔵 Title */
 .verify-card h2 {
-  color: #6a1b9a;
+  color: #60A5FA; /* light blue (matches dark theme) */
+  font-weight: 600;
 }
 
+/* ✏ Description */
 .verify-card p {
-  color: #444;
+  color: #E2E8F0; /* soft text color */
   margin-bottom: 15px;
 }
 
+/* 🔍 Input Section */
 .verify-input-section {
   display: flex;
   gap: 10px;
@@ -35,39 +43,59 @@
   flex: 1;
   padding: 10px;
   border-radius: 8px;
-  border: 1px solid #ccc;
+  border: none;
+  background: rgba(255, 255, 255, 0.12);
+  color: #E2E8F0;
+  outline: none;
+  transition: 0.3s ease;
 }
 
+.verify-input-section input::placeholder {
+  color: #94A3B8;
+}
+
+.verify-input-section input:focus {
+  background: rgba(255, 255, 255, 0.18);
+  box-shadow: 0 0 6px rgba(59, 130, 246, 0.5);
+}
+
+/* 🔎 Button */
 .verify-input-section button {
-  background: #6a1b9a;
+  background: linear-gradient(to right, #3b82f6, #06b6d4);
   color: white;
   border: none;
   padding: 10px 15px;
   border-radius: 8px;
   cursor: pointer;
   font-weight: bold;
+  transition: 0.3s ease;
 }
 
 .verify-input-section button:hover {
-  background: #4a148c;
+  background: linear-gradient(to right, #2563eb, #0891b2);
 }
 
+/* ⏳ Loading */
 .loading {
-  color: #6a1b9a;
+  color: #60A5FA;
   font-weight: 600;
 }
 
+/* ❌ Error */
 .error {
-  color: red;
+  color: #F87171;
   margin-top: 10px;
   font-weight: 500;
 }
 
+/* 📄 Verified Details Card */
 .result-card {
   margin-top: 20px;
   padding: 15px;
   border-radius: 10px;
-  background: #f3e5f5;
+  background: rgba(255, 255, 255, 0.10);
+  backdrop-filter: blur(10px);
+  color: #F8FAFC;
   text-align: left;
-  color: #333;
+  box-shadow: 0 3px 15px rgba(0,0,0,0.35);
 }

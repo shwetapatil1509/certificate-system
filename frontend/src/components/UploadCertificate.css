@@ -1,96 +1,132 @@
-/* 🌟 Body Styling */
-body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: linear-gradient(135deg, #477ead 0%, #184c9f 100%);
-  margin: 0;
-  padding: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
-}
-
-/* ✨ Upload Container */
+/* Full-page container */
 .upload-container {
-  max-width: 400px;
-  width: 90%;
-  padding: 30px;
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.15);
-  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  max-width: 800px;
+  margin: 40px auto;
+  padding: 30px 40px;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(15px);
+  border-radius: 15px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 25px;
-  transition: all 0.3s ease;
+  gap: 20px;
 }
 
-.upload-container:hover {
-  transform: scale(1.02);
-  box-shadow: 0 10px 40px 0 rgba(31, 38, 135, 0.45);
-}
-
-/* 📝 Title */
-.title {
-  font-size: 26px;
-  font-weight: bold;
-  color: #ffffff;
+/* Form title */
+.upload-container .title {
   text-align: center;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-}
-
-/* 📥 Form */
-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  width: 100%;
-}
-
-/* 🧾 Input */
-input {
-  font-size: 16px;
-  padding: 14px;
-  border: none;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.9);
-  outline: none;
-  transition: all 0.3s ease;
-}
-
-input:focus {
-  box-shadow: 0 0 8px rgba(0, 140, 255, 0.6);
-  transform: scale(1.02);
-}
-
-input:hover {
-  box-shadow: 0 0 8px rgba(0, 140, 255, 0.6);
-}
-
-/* 🚀 Button */
-button {
-  padding: 14px;
-  background: linear-gradient(to right, #007bff, #00c6ff);
+  font-size: 2rem;
   color: #fff;
+  margin-bottom: 15px;
+}
+
+/* Input fields */
+.upload-container input[type="text"],
+.upload-container input[type="file"] {
+  width: 100%;
+  padding: 12px 15px;
+  margin-bottom: 15px;
+  border-radius: 10px;
+  border: none;
+  outline: none;
+  font-size: 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+/* File input text color */
+.upload-container input[type="file"]::file-selector-button {
+  background: #4a90e2;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+/* Buttons */
+.upload-container button {
+  width: 100%;
+  padding: 12px;
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #fff;
+  background: linear-gradient(90deg, #4a90e2, #00c6ff);
   border: none;
   border-radius: 12px;
   cursor: pointer;
-  font-size: 18px;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  transition: all 0.3s ease;
+  transition: 0.3s;
 }
 
-button:hover {
-  background: linear-gradient(to right, #0056b3, #008cff);
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(0, 140, 255, 0.5);
+.upload-container button:hover {
+  transform: scale(1.03);
+  opacity: 0.9;
 }
 
-button:active {
-  transform: translateY(1px);
-  box-shadow: 0 2px 8px rgba(0, 140, 255, 0.4);
+/* Error & success messages */
+.upload-container p {
+  font-size: 1.1rem;
+  text-align: center;
+}
+
+/* Back / Logout link */
+.upload-container a {
+  text-align: center;
+  display: block;
+  margin-top: 10px;
+  color: #ffd700;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* Table styling */
+.upload-container table {
+  width: 100%;
+  margin-top: 30px;
+  border-collapse: collapse;
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.upload-container th,
+.upload-container td {
+  padding: 12px 15px;
+  text-align: left;
+}
+
+.upload-container th {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.upload-container tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.upload-container tr:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Status badges */
+.status-badge {
+  padding: 5px 10px;
+  border-radius: 8px;
+  font-weight: bold;
+  text-transform: capitalize;
+}
+
+.status-pending {
+  background-color: #f0ad4e;
+  color: #fff;
+}
+
+.status-verified {
+  background-color: #5cb85c;
+  color: #fff;
+}
+
+.status-rejected {
+  background-color: #d9534f;
+  color: #fff;
 }

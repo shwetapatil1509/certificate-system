@@ -1,9 +1,10 @@
-/* General body styling */
+/* General body styling (Dark Mode) */
 body {
   font-family: 'Arial', sans-serif;
-  background-color: #f5f5f5;
+  background-color: #0F172A; /* Deep navy */
   margin: 0;
   padding: 0;
+  color: #CBD5E1; /* Light slate text */
 }
 
 /* Centering forms */
@@ -11,17 +12,18 @@ body {
   width: 100%;
   max-width: 400px;
   margin: 80px auto;
-  background-color: #fff;
+  background-color: #1E293B; /* Slate card */
   padding: 40px 30px;
-  border-radius: 10px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+  border-radius: 12px;
+  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.4);
 }
 
 /* Headings */
 .auth-container h2 {
   text-align: center;
   margin-bottom: 30px;
-  color: #333;
+  color: #E2E8F0; /* Light heading */
+  font-weight: bold;
 }
 
 /* Form elements */
@@ -30,13 +32,20 @@ body {
   padding: 12px 15px;
   margin-bottom: 20px;
   border-radius: 6px;
-  border: 1px solid #ccc;
+  border: 1px solid #334155; /* Dark border */
+  background-color: #0F172A; /* Deep background */
+  color: #E2E8F0;
   font-size: 16px;
-  transition: border-color 0.3s;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.auth-container input::placeholder {
+  color: #94A3B8; /* Soft placeholder */
 }
 
 .auth-container input:focus {
-  border-color: #007BFF;
+  border-color: #3B82F6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
   outline: none;
 }
 
@@ -44,7 +53,7 @@ body {
 .auth-container button {
   width: 100%;
   padding: 12px;
-  background-color: #007BFF;
+  background-color: #3B82F6; /* Academic blue */
   border: none;
   border-radius: 6px;
   color: #fff;
@@ -54,14 +63,14 @@ body {
 }
 
 .auth-container button:hover {
-  background-color: #0056b3;
+  background-color: #2563EB;
 }
 
 /* Error messages */
 .auth-container p {
-  color: red;
+  color: #F87171; /* Soft red */
   text-align: center;
-  margin-top: -10px;
+  margin-top: 10px;
   margin-bottom: 10px;
   font-size: 14px;
 }
@@ -72,11 +81,11 @@ body {
   display: block;
   margin-top: 10px;
   font-size: 14px;
-  color: #007BFF;
+  color: #60A5FA;
   text-decoration: none;
   transition: color 0.3s;
 }
 
 .auth-container .link:hover {
-  color: #0056b3;
+  color: #3B82F6;
 }

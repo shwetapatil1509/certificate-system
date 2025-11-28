@@ -10,33 +10,59 @@ const VerifyCertificate = () => {
   const { token } = useContext(AuthContext);
   const navigate = useNavigate();
 
+  // -----------------------------
+  // 1️⃣ SEARCH CERTIFICATE BY ID
+  // -----------------------------
   const handleSearch = async () => {
     try {
-      const res = await axios.get(`http://127.0.0.1:5000/api/certificates/${certificateId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setCertificate(res.data);
+      const res = await axios.get(
+        "http://127.0.0.1:5000/api/admin/certificates",
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      const found = res.data.find(
+        (c) => c._id === certificateId.trim()
+      );
+
+      if (!found) {
+        setCertificate(null);
+        setMessage("Certificate not found or invalid ID.");
+        return;
+      }
+
+      setCertificate(found);
       setMessage("");
     } catch (err) {
+      console.log(err);
       setCertificate(null);
-      setMessage("Certificate not found or invalid ID.");
+      setMessage("Server error while searching.");
     }
   };
 
-  // const handleVerify = async (status) => {
-  //   try {
-  //     await axios.put(
-  //       `http://127.0.0.1:5000/api/admin/certificates/${certificateId}/verify`,
-  //       { status },
-  //       {
-  //         headers: { Authorization: `Bearer ${token}` },
-  //       }
-  //     );
-  //     setMessage(`Certificate ${status} successfully.`);
-  //   } catch (err) {
-  //     setMessage("Failed to update status.");
-  //   }
-  // };
+  // -------------------------------------
+  // 2️⃣ CALL VERIFY OR REJECT BACKEND API
+  // -------------------------------------
+  const handleVerify = async (status) => {
+    try {
+      await axios.put(
+        `http://127.0.0.1:5000/api/admin/certificates/${certificateId}/verify`,
+        { status },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      setMessage(`Certificate ${status} successfully.`);
+
+      // Refresh the certificate data
+      handleSearch();
+    } catch (err) {
+      console.log(err);
+      setMessage("Failed to update status.");
+    }
+  };
 
   return (
     <div className="dashboard-container">
@@ -49,6 +75,7 @@ const VerifyCertificate = () => {
         onChange={(e) => setCertificateId(e.target.value)}
         style={{ padding: "10px", width: "300px", marginRight: "10px" }}
       />
+
       <button onClick={handleSearch}>Search</button>
 
       {message && <p>{message}</p>}
@@ -56,13 +83,33 @@ const VerifyCertificate = () => {
       {certificate && (
         <div style={{ marginTop: "20px" }}>
           <h4>Certificate Details</h4>
-          <p><strong>Title:</strong> {certificate.title}</p>
-          <p><strong>User:</strong> {certificate.user_name}</p>
-          <p><strong>Status:</strong> {certificate.status}</p>
+
+          <p>
+            <strong>Title:</strong> {certificate.title}
+          </p>
+          <p>
+            <strong>User:</strong> {certificate.user_name}
+          </p>
+          <p>
+            <strong>Status:</strong>{" "}
+            <span
+              style={{
+                color:
+                  certificate.status === "verified"
+                    ? "green"
+                    : certificate.status === "rejected"
+                    ? "red"
+                    : "orange",
+                fontWeight: "bold",
+              }}
+            >
+              {certificate.status}
+            </span>
+          </p>
 
           <div style={{ marginTop: "10px" }}>
             <button
-              // onClick={() => handleVerify("verified")}
+              onClick={() => handleVerify("verified")}
               style={{
                 backgroundColor: "green",
                 color: "white",
@@ -70,21 +117,21 @@ const VerifyCertificate = () => {
                 marginRight: "10px",
                 border: "none",
                 borderRadius: "6px",
-                cursor: "pointer"
+                cursor: "pointer",
               }}
             >
               Verify
             </button>
 
             <button
-              // onClick={() => handleVerify("rejected")}
+              onClick={() => handleVerify("rejected")}
               style={{
                 backgroundColor: "red",
                 color: "white",
                 padding: "8px 16px",
                 border: "none",
                 borderRadius: "6px",
-                cursor: "pointer"
+                cursor: "pointer",
               }}
             >
               Reject
@@ -101,7 +148,7 @@ const VerifyCertificate = () => {
           textDecoration: "underline",
           border: "none",
           cursor: "pointer",
-          marginTop: "20px"
+          marginTop: "20px",
         }}
       >
         ← Back to Admin Dashboard
